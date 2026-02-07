@@ -21,9 +21,10 @@ func New(basePath string) (*Storage, error) {
 	}
 
 	for _, dir := range []string{s.inputsDir, s.outputsDir} {
-		if err := os.MkdirAll(dir, 0750); err != nil {
+		if err := os.MkdirAll(dir, 0777); err != nil {
 			return nil, fmt.Errorf("create storage dir %s: %w", dir, err)
 		}
+		os.Chmod(dir, 0777)
 	}
 
 	return s, nil
@@ -54,7 +55,7 @@ func (s *Storage) DeleteJobFiles(jobID string) {
 
 func (s *Storage) CreateInput(jobID string) (*os.File, error) {
 	p := s.InputPath(jobID)
-	f, err := os.Create(p)
+	f, err := os.OpenFile(p, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil, fmt.Errorf("create input %s: %w", p, err)
 	}
@@ -89,7 +90,6 @@ func (s *Storage) FileSize(path string) (int64, error) {
 
 func (s *Storage) UsedBytes() (int64, error) {
 	var total int64
-
 	err := filepath.WalkDir(s.basePath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -103,7 +103,6 @@ func (s *Storage) UsedBytes() (int64, error) {
 		}
 		return nil
 	})
-
 	return total, err
 }
 

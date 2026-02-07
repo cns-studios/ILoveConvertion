@@ -47,7 +47,7 @@ services:
     volumes:
       - file_storage:/app/storage
     tmpfs:
-      - /tmp/processing:size=${TMPFS_SIZE:-1g},noexec,nosuid,nodev
+      - /tmp/processing:size=${TMPFS_SIZE:-1g},mode=1777
     depends_on:
       postgres:
         condition: service_healthy

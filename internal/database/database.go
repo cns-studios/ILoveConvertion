@@ -149,9 +149,9 @@ func (db *DB) CreateJob(ctx context.Context, p CreateJobParams, retentionHours i
 
 	row := db.pool.QueryRowContext(ctx, `
 		INSERT INTO jobs (id, session_id, operation, input_filename, input_size, original_name, params, expires_at)
-		VALUES ($1, $2, $3, $1, $4, $5, $6, $7)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING `+jobColumns,
-		jobID, p.SessionID, p.Operation,
+		jobID, p.SessionID, p.Operation, jobID,
 		p.InputSize, p.OriginalName, paramsJSON, expiresAt,
 	)
 

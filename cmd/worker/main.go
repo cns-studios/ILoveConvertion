@@ -131,38 +131,38 @@ func (w *worker) processJob(ctx context.Context, workerID int, jobID string) {
 
 	tmpDir := filepath.Join(w.cfg.TmpDir, jobID)
 	if err := os.MkdirAll(tmpDir, 0700); err != nil {
-		log.Printf("[worker-%d] tmpdir create error: %v", workerID, err)
+		log.Printf("[worker-%d] ✗ tmpdir error: %v", workerID, err)
 		w.failJob(ctx, jobID, "Internal error: failed to create temp directory")
 		return
 	}
-	defer func() {
-		os.RemoveAll(tmpDir)
-	}()
+	defer os.RemoveAll(tmpDir)
 
 	job, err := w.db.GetJob(ctx, jobID)
 	if err != nil {
-		log.Printf("[worker-%d] Fetch job error: %v", workerID, err)
+		log.Printf("[worker-%d] ✗ fetch job error: %v", workerID, err)
 		return
 	}
 
 	if job.Status != models.StatusPending {
-		log.Printf("[worker-%d] Job %s has status %q, skipping", workerID, jobID, job.Status)
+		log.Printf("[worker-%d] ⊘ Job %s status=%q, skipping", workerID, jobID, job.Status)
 		return
 	}
 
 	if err := w.db.UpdateJobStarted(ctx, jobID); err != nil {
-		log.Printf("[worker-%d] Update started error: %v", workerID, err)
+		log.Printf("[worker-%d] ✗ update started error: %v", workerID, err)
 		return
 	}
 
 	key, err := filecrypto.DeriveKey(w.cfg.MasterKey, jobID)
 	if err != nil {
+		log.Printf("[worker-%d] ✗ key derivation error: %v", workerID, err)
 		w.failJob(ctx, jobID, "Encryption key derivation failed")
 		return
 	}
 
 	params, err := models.ParseParams(job.Params)
 	if err != nil {
+		log.Printf("[worker-%d] ✗ parse params error: %v", workerID, err)
 		w.failJob(ctx, jobID, fmt.Sprintf("Invalid parameters: %v", err))
 		return
 	}
@@ -173,8 +173,11 @@ func (w *worker) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 	tmpInput := filepath.Join(tmpDir, "input."+inputExt)
 
+	log.Printf("[worker-%d] Decrypting %s → %s", workerID, w.store.InputPath(jobID), tmpInput)
+
 	if err := filecrypto.DecryptFile(key, w.store.InputPath(jobID), tmpInput); err != nil {
-		w.failJob(ctx, jobID, fmt.Sprintf("Failed to decrypt input file: %v", err))
+		log.Printf("[worker-%d] ✗ decrypt error: %v", workerID, err)
+		w.failJob(ctx, jobID, fmt.Sprintf("Failed to decrypt input: %v", err))
 		return
 	}
 
@@ -184,24 +187,31 @@ func (w *worker) processJob(ctx context.Context, workerID int, jobID string) {
 	}
 	tmpOutput := filepath.Join(tmpDir, "output."+outExt)
 
+	log.Printf("[worker-%d] Processing %s: %s → .%s", workerID, job.Operation, job.OriginalName, outExt)
+
 	timeout := w.cfg.TimeoutFor(job.Operation)
 	processCtx, processCancel := context.WithTimeout(ctx, timeout)
 	processErr := w.dispatch(processCtx, job.Operation, tmpInput, tmpOutput, tmpDir, params)
 	processCancel()
 
 	if processErr != nil {
+		log.Printf("[worker-%d] ✗ process error: %v", workerID, processErr)
 		w.handleProcessError(ctx, workerID, jobID, job.Operation, processErr)
 		return
 	}
 
 	outputInfo, err := os.Stat(tmpOutput)
 	if err != nil || outputInfo.Size() == 0 {
+		log.Printf("[worker-%d] ✗ output missing or empty: err=%v", workerID, err)
 		w.failJob(ctx, jobID, "Processing completed but output file is missing or empty")
 		return
 	}
 	outputSize := outputInfo.Size()
 
+	log.Printf("[worker-%d] Encrypting output (%s) → %s", workerID, formatBytes(outputSize), w.store.OutputPath(jobID))
+
 	if err := filecrypto.EncryptFile(key, tmpOutput, w.store.OutputPath(jobID)); err != nil {
+		log.Printf("[worker-%d] ✗ encrypt output error: %v", workerID, err)
 		w.failJob(ctx, jobID, fmt.Sprintf("Failed to encrypt output: %v", err))
 		return
 	}
@@ -209,7 +219,7 @@ func (w *worker) processJob(ctx context.Context, workerID int, jobID string) {
 	outputFilename := models.OutputName(job.OriginalName, params.OutputFormat)
 
 	if err := w.db.UpdateJobCompleted(ctx, jobID, outputFilename, outputSize); err != nil {
-		log.Printf("[worker-%d] Update completed error for %s: %v", workerID, jobID, err)
+		log.Printf("[worker-%d] ✗ update completed error: %v", workerID, err)
 	}
 
 	elapsed := time.Since(startTime).Round(time.Millisecond)
