@@ -7,11 +7,13 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
-COPY go.* ./
-RUN go mod download 2>/dev/null || true
+
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
+RUN go mod tidy
+
+RUN mkdir -p /out && \
+    CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o /out/worker ./cmd/worker
 
 FROM debian:bookworm-slim

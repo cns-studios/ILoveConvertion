@@ -96,11 +96,9 @@ func ImageCompress(ctx context.Context, inputPath, outputPath string, params mod
 	case "jpeg":
 		opts.StripMetadata = true
 
-	case "gif":
-
 	case "tiff":
 		if params.Lossless {
-			opts.Compression = bimg.CompressionLZW
+			opts.Quality = 100
 		}
 	}
 

@@ -1,11 +1,14 @@
+# ── Build Stage ──
 FROM golang:1.22-bookworm AS builder
 
 WORKDIR /build
-COPY go.* ./
-RUN go mod download 2>/dev/null || true
+
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+RUN go mod tidy
+
+RUN mkdir -p /out && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -ldflags="-s -w" -o /out/api ./cmd/api
 
 FROM alpine:3.20

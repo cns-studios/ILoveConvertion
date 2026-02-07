@@ -16,7 +16,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - fileforge
+      - ilc
 
   api:
     build:
@@ -37,7 +37,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - fileforge
+      - ilc
 
   worker:
     build:
@@ -62,7 +62,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - fileforge
+      - ilc
 
   rembg:
     build:
@@ -81,7 +81,7 @@ services:
         max-size: "5m"
         max-file: "2"
     networks:
-      - fileforge
+      - ilc
 
   redis:
     image: redis:7-alpine
@@ -99,14 +99,14 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - fileforge
+      - ilc
 
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-fileforge}
+      POSTGRES_USER: ${POSTGRES_USER:-ilc}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB:-fileforge}
+      POSTGRES_DB: ${POSTGRES_DB:-ilc}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -117,7 +117,7 @@ services:
       retries: 5
     restart: unless-stopped
     networks:
-      - fileforge
+      - ilc
 
 volumes:
   file_storage:
@@ -125,5 +125,5 @@ volumes:
   postgres_data:
 
 networks:
-  fileforge:
+  ilc:
     driver: bridge
