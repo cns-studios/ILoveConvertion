@@ -24,7 +24,6 @@ MODEL_READY = True
 
 @app.route("/health", methods=["GET"])
 def health():
-    """Docker health check + API readiness gate."""
     if not MODEL_READY:
         return jsonify({"status": "loading", "model": "silueta"}), 503
     return jsonify({"status": "ok", "model": "silueta"}), 200
@@ -32,11 +31,6 @@ def health():
 
 @app.route("/remove-bg", methods=["POST"])
 def remove_background():
-    """
-    Accepts: multipart/form-data with field 'file'
-    Optional query param: ?format=png|webp (default: png)
-    Returns: processed image bytes with Content-Type
-    """
     if "file" not in request.files:
         return jsonify({"error": "No file provided. Use field name 'file'."}), 400
 
