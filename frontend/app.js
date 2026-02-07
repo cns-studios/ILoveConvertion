@@ -92,7 +92,6 @@
                 state.formats = await res.json();
             }
         } catch (e) {
-            console.warn('Failed to load formats, using defaults:', e);
         }
 
         if (!state.formats) {
@@ -174,6 +173,11 @@
         clearFile();
         resetUI();
         updateFileInputAccept();
+
+        const workspace = $('.workspace');
+        workspace.classList.remove('slide-content');
+        void workspace.offsetWidth;
+        workspace.classList.add('slide-content');
     }
 
     function updateAcceptedFormats() {
@@ -534,7 +538,6 @@
                     break;
             }
         } catch (e) {
-            console.error('Poll error:', e);
         }
     }
 
@@ -574,7 +577,7 @@
         const outExt = job.output_filename
             ? job.output_filename.substring(job.output_filename.lastIndexOf('.'))
             : '';
-        dom.resultDownload.setAttribute('download', baseName + '-fileforge' + outExt);
+        dom.resultDownload.setAttribute('download', baseName + '-iloveconvertion' + outExt);
 
         dom.resultSuccess.classList.remove('hidden');
         dom.resultError.classList.add('hidden');
