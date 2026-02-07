@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FileForge — File Conversion & Compression</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒️</text></svg>">
+</head>
+<body>
+    <div id="app">
+
+        <header class="header">
+            <div class="header-inner">
+                <h1 class="logo">⚒️ FileForge</h1>
+                <p class="tagline">Convert, compress &amp; transform — encrypted, no signup</p>
+            </div>
+        </header>
+
+        <nav class="tool-tabs" role="tablist">
+            <button class="tab active" data-tool="image_convert" role="tab" aria-selected="true">
+                <span class="tab-icon">🖼️</span> Image Convert
+            </button>
+            <button class="tab" data-tool="image_compress" role="tab">
+                <span class="tab-icon">📦</span> Image Compress
+            </button>
+            <button class="tab" data-tool="image_remove_bg" role="tab">
+                <span class="tab-icon">✂️</span> Remove BG
+            </button>
+            <button class="tab" data-tool="pdf_compress" role="tab">
+                <span class="tab-icon">📄</span> PDF Compress
+            </button>
+            <button class="tab" data-tool="audio_convert" role="tab">
+                <span class="tab-icon">🎵</span> Audio Convert
+            </button>
+            <button class="tab" data-tool="audio_compress" role="tab">
+                <span class="tab-icon">🔊</span> Audio Compress
+            </button>
+            <button class="tab" data-tool="video_compress" role="tab">
+                <span class="tab-icon">🎬</span> Video Compress
+            </button>
+        </nav>
+
+        <main class="workspace">
+
+            <div id="dropzone" class="dropzone">
+                <div class="dropzone-content">
+                    <div class="dropzone-icon">📁</div>
+                    <p class="dropzone-text">Drag &amp; drop your file here</p>
+                    <p class="dropzone-subtext">or <label for="file-input" class="file-label">browse</label></p>
+                    <input type="file" id="file-input" class="file-input" />
+                    <p class="dropzone-formats" id="accepted-formats"></p>
+                </div>
+            </div>
+
+            <div id="file-info" class="file-info hidden">
+                <div class="file-info-row">
+                    <span id="file-name" class="file-name"></span>
+                    <span id="file-size" class="file-size"></span>
+                    <button id="file-clear" class="btn-icon" title="Remove file">✕</button>
+                </div>
+            </div>
+
+            <div id="options-panel" class="options-panel hidden">
+            </div>
+
+            <div class="action-row">
+                <button id="btn-process" class="btn-primary" disabled>
+                    <span id="btn-text">Select a file to start</span>
+                </button>
+            </div>
+
+            <div id="progress-section" class="progress-section hidden">
+                <div class="progress-status">
+                    <span id="progress-label">Uploading...</span>
+                    <span id="progress-pct">0%</span>
+                </div>
+                <div class="progress-bar-track">
+                    <div id="progress-bar" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <p id="progress-detail" class="progress-detail"></p>
+            </div>
+
+            <div id="result-section" class="result-section hidden">
+                <div class="result-card result-success" id="result-success">
+                    <div class="result-icon">✅</div>
+                    <p class="result-text">Processing complete!</p>
+                    <div class="result-stats">
+                        <span id="result-input-size"></span>
+                        <span class="result-arrow">→</span>
+                        <span id="result-output-size"></span>
+                        <span id="result-savings" class="result-savings"></span>
+                    </div>
+                    <a id="result-download" class="btn-primary btn-download" href="#" download>
+                        ⬇️ Download
+                    </a>
+                </div>
+                <div class="result-card result-error hidden" id="result-error">
+                    <div class="result-icon">❌</div>
+                    <p class="result-text">Processing failed</p>
+                    <p id="error-message" class="error-message"></p>
+                    <button id="btn-retry" class="btn-secondary">Try Again</button>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="footer">
+            <p>Files encrypted at rest • Auto-deleted after 24h • No accounts • No tracking</p>
+        </footer>
+
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
