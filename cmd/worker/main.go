@@ -275,7 +275,6 @@ func (w *worker) handleProcessError(ctx context.Context, workerID int, jobID, op
 }
 
 func (w *worker) failJob(ctx context.Context, jobID, msg string) {
-	// Truncate very long error messages
 	if len(msg) > 1000 {
 		msg = msg[:1000] + "…"
 	}
