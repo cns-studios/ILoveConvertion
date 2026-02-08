@@ -81,7 +81,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		APIPort: envInt("API_PORT", 3000),
+		APIPort: envInt("API_PORT", 3015),
 
 		DBHost:     envStr("POSTGRES_HOST", "postgres"),
 		DBPort:     envInt("POSTGRES_PORT", 5432),

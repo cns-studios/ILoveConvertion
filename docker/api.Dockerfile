@@ -25,6 +25,6 @@ RUN mkdir -p /app/storage/inputs /app/storage/outputs && \
 
 USER appuser
 
-EXPOSE 3000
+EXPOSE 3015
 
 CMD ["./api"]
