@@ -2,88 +2,85 @@
 
 ### Will be available soon!
 
-**ILoveConvertion** (also known as FileForge) is a high-performance, privacy-focused file processing engine. It allows users to convert, compress, and transform images, audio, video, and PDF files through a modern, responsive web interface or a RESTful API.
+**ILoveConvertion** is a high-performance, privacy-focused file processing engine designed for modern web environments. It provides a robust infrastructure to convert, compress, and transform various media types while maintaining strict security standards.
 
-All files are **encrypted at rest** using AES-256 with unique per-job keys derived from a master secret. Files are automatically deleted from the server after 24 hours.
+All files are **encrypted at rest** using AES-256-GCM with unique keys derived for every single job. The system is built for speed, utilizing RAM-disks (tmpfs) for all intermediate processing to ensure zero data traces on physical disks during transformation.
 
 ## Features
 
 - **Image Transformation**:
-  - Convert between formats: JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF, BMP.
-  - Smart compression with quality control and lossless options.
-  - **AI Background Removal**: Powered by `rembg` (Silueta model).
-- **Audio Processing**:
-  - Convert between: MP3, WAV, FLAC, OGG, OPUS, AAC, M4A, AIFF.
-  - Compression with VBR/CBR control.
-- **Video Compression**:
-  - Optimize MP4, MKV, and WebM using H.264 and VP9 codecs.
+  - Format Conversion: JPEG, PNG, WebP, TIFF, GIF, AVIF, HEIF, BMP.
+  - High-Efficiency Compression: Lossless and lossy modes with fine-grained quality control.
+  - **AI Background Removal**: Seamless integration with the `rembg` microservice using the Silueta model.
 - **PDF Optimization**:
-  - Multi-stage compression using Ghostscript and QPDF.
-  - Resolution and quality presets (Screen, Ebook, Printer, Prepress).
-- **Security First**:
-  - End-to-end storage encryption.
-  - Session-based job isolation.
+  - Multi-stage pipeline using Ghostscript and QPDF.
+  - Smart presets: Screen (72 DPI), Ebook (150 DPI), Printer (300 DPI), and Prepress.
+- **Audio Processing**:
+  - Support for MP3, WAV, FLAC, OGG, OPUS, AAC, M4A, AIFF.
+  - Variable and Constant Bitrate (VBR/CBR) control.
+- **Video Compression**:
+  - Optimized for the web using H.264 (MP4/MKV) and VP9 (WebM).
+  - Advanced CRF-based bitrate management and metadata stripping.
+- **Privacy First**:
+  - Every file is encrypted immediately upon arrival.
+  - Automatic 24-hour retention policy with secure deletion.
+  - Session-based isolation to prevent cross-user data leakage.
 
 ## Architecture
 
-FileForge is built as a distributed system using Docker:
+ILC operates as a distributed microservices architecture:
 
-- **API (Go)**: Handles file uploads, job creation, and file serving.
-- **Worker (Go)**: Processes the task queue, utilizing system tools (`ffmpeg`, `libvips`, `gs`, `qpdf`).
-- **Rembg Service (Python/Flask)**: A specialized microservice for AI-powered background removal.
-- **Queue (Redis)**: Manages job distribution between API and Workers.
-- **Database (PostgreSQL)**: Stores job metadata and session information.
-- **Nginx**: Acts as a reverse proxy and serves the static frontend.
+- **API (Go)**: A gateway handling uploads, job management, and file serving.
+- **Worker (Go)**: It manages the processing lifecycle and orchestrates system tools like `libvips`, `ffmpeg`, `ghostscript`, and `qpdf`.
+- **Rembg Service (Python)**: An AI service dedicated to background removal tasks.
+- **Redis**: The backbone for the asynchronous job queue and internal messaging.
+- **PostgreSQL**: Stores job metadata, session states, and audit trails.
+- **Nginx**: Provides reverse proxying and serves the frontend.
 
-## Deployment (Self-Hosting)
+## Quick Start (Docker)
 
-### Prerequisites
-
-- [Docker](https://docs.docker.com/get-docker/)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-
-### Quick Start
-
-1. **Clone the repository**:
+1. **Clone & Enter**:
    ```bash
-   git clone https://github.com/cns-studios/ILoveConvertion.git
-   cd ILoveConvertion
+   git clone https://github.com/cns-studios/ILoveConvertion.git && cd ILoveConvertion
    ```
 
-2. **Configure environment**:
+2. **Environment Setup**:
    ```bash
    cp .env.example .env
-   # Edit .env and set a strong MASTER_KEY
+   # Ensure ENCRYPTION_MASTER_KEY is set to a 32-character hex string
    ```
 
-3. **Launch the stack**:
+3. **Deployment**:
    ```bash
    docker-compose up -d --build
    ```
 
-The application will be available at `http://localhost:8080` (or the port specified in your `.env`).
+## Data Processing Pipeline
 
-## Configuration
+### 1. Ingestion & Encryption
+When a file is uploaded via the `/api/jobs` endpoint:
+- The system generates a cryptographically secure **Job ID**.
+- A unique **Encryption Key** is derived using HKDF-SHA256 from the global `MASTER_KEY` and the `JobID`.
+- The raw stream is encrypted on-the-fly using **AES-256-GCM** in 64KB chunks before it ever touches the persistent storage (`/storage/inputs`).
 
-Key settings in `.env`:
+### 2. Asynchronous Queuing
+Once the encrypted input is stored, a job manifest is recorded in PostgreSQL, and the `JobID` is pushed into a **Redis-backed queue**. This allows the API to remain responsive regardless of the file size or processing complexity.
 
-- `ENCRYPTION_MASTER_KEY`: 32-character hex string used for file encryption (generate with `openssl rand -hex 32`).
-- `MAX_FILE_SIZE`: Maximum upload size in bytes (default 500MB).
-- `FILE_RETENTION_HOURS`: How long to keep files before auto-deletion (default 24).
-- `WORKER_CONCURRENCY`: Number of simultaneous jobs per worker (default 4).
-- `TMPFS_SIZE`: Size of the RAM-disk used for processing (default 1GB).
+### 3. Secure Worker Processing
+A Worker picks up the `JobID` and performs the following:
+- **Sandbox Creation**: A temporary directory is created in a RAM-disk (`tmpfs`). This ensures that intermediate, unencrypted files never touch a physical SSD/HDD.
+- **Decryption**: The worker derives the job-specific key and decrypts the input file from storage into the RAM-disk.
+- **Orchestration**: Depending on the requested operation, the worker invokes the appropriate processor:
+    - **Images**: Utilizes `libvips` (via `bimg`) for memory-efficient transformations or `pngquant` for lossy optimization.
+    - **PDFs**: Runs a two-pass optimization using `Ghostscript` for content downsampling and `QPDF` for linearization and stream compression.
+    - **Audio/Video**: Leverages `ffmpeg` with optimized presets for high-quality, low-bitrate output.
+    - **AI Tasks**: For background removal, the file is securely streamed to the internal Rembg microservice.
 
-## API Usage
+### 4. Finalization & Output
+The resulting file in the RAM-disk is:
+- **Re-encrypted**: Using the same job-specific key before being moved to the persistent output storage (`/storage/outputs`).
+- **Validated**: The system checks the integrity and size of the output.
+- **Cleaned Up**: The RAM-disk sandbox is immediately wiped.
 
-### Create a Job
-`POST /api/jobs` (Multipart Form)
-- `file`: The file to process.
-- `operation`: e.g., `image_convert`, `pdf_compress`.
-- `output_format`: desired extension.
-- `quality`: 1-100 (optional).
-
-### Check Status
-`GET /api/jobs/{id}`
-
-### Download Result
-`GET /api/jobs/{id}/download`
+### 5. Automated Cleanup
+A background task runs every 15 minutes to identify jobs older than the configured `FILE_RETENTION_HOURS` (default 24h). It removes the database records and triggers a secure deletion of both input and output encrypted files from the storage volume.
