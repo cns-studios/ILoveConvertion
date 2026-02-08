@@ -80,9 +80,18 @@
     };
 
     async function init() {
+        checkConsent();
         await loadFormats();
         bindEvents();
         switchTool('image_convert');
+    }
+
+    function checkConsent() {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('tos_and_policy_accepted='));
+        const isAccepted = cookie ? cookie.split('=')[1] === 'true' : false;
+        if (!isAccepted) {
+            $('#consent-modal').classList.remove('hidden');
+        }
     }
 
     async function loadFormats() {
@@ -129,6 +138,10 @@
             tab.addEventListener('click', () => switchTool(tab.dataset.tool));
         });
 
+        $('#btn-alert-close').addEventListener('click', () => {
+            $('#alert-modal').classList.add('hidden');
+        });
+
         dom.fileInput.addEventListener('change', handleFileSelect);
 
         dom.dropzone.addEventListener('click', () => dom.fileInput.click());
@@ -156,6 +169,17 @@
 
         dom.btnRetry.addEventListener('click', () => {
             resetUI();
+        });
+
+        $('#btn-accept').addEventListener('click', () => {
+            const date = new Date();
+            date.setFullYear(date.getFullYear() + 1);
+            document.cookie = `tos_and_policy_accepted=true; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
+            $('#consent-modal').classList.add('hidden');
+        });
+
+        $('#btn-decline').addEventListener('click', () => {
+            window.location.href = 'https://google.com';
         });
     }
 
@@ -253,15 +277,8 @@
         const outputs = toolFormats && toolFormats.output ? toolFormats.output : [];
         if (outputs === 'same_as_input' || outputs.length === 0) return '';
 
-        const options = outputs
-            .map((f) => `<option value="${f}">${f.toUpperCase()}</option>`)
-            .join('');
-
-        return `
-            <div class="option-group">
-                <label class="option-label">Output Format</label>
-                <select class="option-select" id="opt-output-format">${options}</select>
-            </div>`;
+        const options = outputs.map(f => ({ value: f, label: f.toUpperCase() }));
+        return buildNativeSelect('Output Format', 'opt-output-format', options, outputs[0]);
     }
 
     function buildBgFormatSelect() {
@@ -269,15 +286,8 @@
         const outputs = toolFormats && toolFormats.output ? toolFormats.output : ['png', 'webp'];
         const defaultOut = (toolFormats && toolFormats.default_output) || 'png';
 
-        const options = outputs
-            .map((f) => `<option value="${f}" ${f === defaultOut ? 'selected' : ''}>${f.toUpperCase()}</option>`)
-            .join('');
-
-        return `
-            <div class="option-group">
-                <label class="option-label">Output Format</label>
-                <select class="option-select" id="opt-output-format">${options}</select>
-            </div>`;
+        const options = outputs.map(f => ({ value: f, label: f.toUpperCase() }));
+        return buildNativeSelect('Output Format', 'opt-output-format', options, defaultOut);
     }
 
     function buildQualitySlider() {
@@ -320,14 +330,27 @@
     }
 
     function buildDpiSelect() {
+        const options = [
+            { value: '72', label: '72 DPI — Smallest' },
+            { value: '150', label: '150 DPI — Balanced' },
+            { value: '300', label: '300 DPI — High Quality' },
+            { value: '600', label: '600 DPI — Maximum' }
+        ];
+        return buildNativeSelect('Image DPI in PDF', 'opt-image-dpi', options, '150');
+    }
+
+    function buildNativeSelect(label, id, options, defaultValue) {
+        const optionsHtml = options.map(o => `
+            <option value="${o.value}" ${o.value === defaultValue ? 'selected' : ''}>
+                ${o.label}
+            </option>
+        `).join('');
+
         return `
             <div class="option-group">
-                <label class="option-label">Image DPI in PDF</label>
-                <select class="option-select" id="opt-image-dpi">
-                    <option value="72">72 DPI — Smallest</option>
-                    <option value="150" selected>150 DPI — Balanced</option>
-                    <option value="300">300 DPI — High Quality</option>
-                    <option value="600">600 DPI — Maximum</option>
+                <label class="option-label" for="${id}">${label}</label>
+                <select class="option-select" id="${id}">
+                    ${optionsHtml}
                 </select>
             </div>`;
     }
@@ -592,8 +615,10 @@
         dom.resultSection.classList.remove('hidden');
     }
 
-    function showInlineError(message) {
-        alert(message);
+    function showInlineError(message, title = 'Info') {
+        $('#alert-title').textContent = title;
+        $('#alert-text').textContent = message;
+        $('#alert-modal').classList.remove('hidden');
     }
 
     function resetUI() {

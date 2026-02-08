@@ -144,10 +144,33 @@
             <a href="/privacy.html">Privacy Policy</a>
             <span class="footer-sep"></span>
             <a href="/terms.html">Terms of Service</a>
-            <span class="footer-sep"></span>
-            <a href="/impressum.html">Impressum</a>
         </footer>
 
+    </div>
+
+    <div id="alert-modal" class="modal-overlay hidden">
+        <div class="modal-content modal-content-small">
+            <h2 id="alert-title" class="modal-title">Info</h2>
+            <p id="alert-text" class="modal-text"></p>
+            <div class="modal-actions">
+                <button id="btn-alert-close" class="btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="consent-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 class="modal-title">Terms & Privacy</h2>
+            <p class="modal-text">
+                Welcome to ILoveConvertion. Before using our service, please review and accept our 
+                <a href="/terms.html" target="_blank">Terms of Service</a> and 
+                <a href="/privacy.html" target="_blank">Privacy Policy</a>.
+            </p>
+            <div class="modal-actions">
+                <button id="btn-decline" class="btn-secondary">Decline</button>
+                <button id="btn-accept" class="btn-primary">Accept & Continue</button>
+            </div>
+        </div>
     </div>
 
     <script src="/app.js"></script>

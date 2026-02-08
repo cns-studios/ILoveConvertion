@@ -25,30 +25,252 @@
         </header>
         <main class="legal-content">
             <h2 class="legal-title">Privacy Policy</h2>
-            <p class="legal-updated">Last updated: January 2025</p>
+            <p class="legal-updated">Last updated: 08.02.2026</p>
+            
             <section class="legal-section">
-                <h3>1. Data Collection</h3>
-                <p>We do not collect personal data. Files uploaded for conversion are processed on our servers and automatically deleted after 24 hours.</p>
+                <h3>1. Controller Information</h3>
+                <p><strong>Name:</strong> Aaron Gerkens<br>
+                <strong>Email:</strong> contact@cns-studios.com<br>
+                Responsible for data processing under GDPR Art. 4(7)</p>
             </section>
+
             <section class="legal-section">
-                <h3>2. File Storage</h3>
-                <p>Uploaded files are encrypted at rest. We do not access, share, or analyze the content of your files. All files are permanently removed from our systems within 24 hours of upload.</p>
+                <h3>2. Overview</h3>
+                <p>ILoveConvertion ("we", "our", "the service") is a privacy-focused file processing service operated as a non-commercial hobby project. We take your privacy seriously and process your data in accordance with the General Data Protection Regulation (GDPR/DSGVO) and the German Federal Data Protection Act (BDSG).</p>
+                <p><strong>Key Privacy Features:</strong></p>
+                <ul>
+                    <li>All uploaded files are encrypted at rest using AES-256-GCM</li>
+                    <li>Files are automatically deleted after 24 hours</li>
+                    <li>No user accounts or registration required</li>
+                    <li>No tracking, analytics, or advertising</li>
+                    <li>Processing occurs in RAM-disk (tmpfs) to prevent disk traces</li>
+                    <li>Minimal data collection</li>
+                </ul>
             </section>
+
             <section class="legal-section">
-                <h3>3. Cookies &amp; Tracking</h3>
-                <p>We do not use cookies, analytics, or any form of user tracking. No third-party scripts are loaded on this site.</p>
+                <h3>3. Legal Basis for Processing</h3>
+                <p>We process your data based on the following legal grounds under GDPR:</p>
+                <ul>
+                    <li><strong>Art. 6(1)(a) GDPR - Consent:</strong> By using our service, you consent to the processing of your uploaded files</li>
+                    <li><strong>Art. 6(1)(f) GDPR - Legitimate Interest:</strong> Technical necessity for service operation (logs, security)</li>
+                </ul>
             </section>
+
             <section class="legal-section">
-                <h3>4. Contact</h3>
-                <p>For privacy-related inquiries, please reach out via our GitHub repository.</p>
+                <h3>4. Data We Collect and Process</h3>
+                
+                <h4>4.1 Uploaded Files</h4>
+                <p><strong>What:</strong> Any files you voluntarily upload to our service<br>
+                <strong>Why:</strong> To perform the requested conversion/processing operation<br>
+                <strong>How long:</strong> Maximum 24 hours, then automatically deleted<br>
+                <strong>Processing location:</strong> Encrypted storage on our server, decrypted only in RAM during processing<br>
+                <strong>Legal basis:</strong> Consent (GDPR Art. 6(1)(a))</p>
+                
+                <p><strong>Important:</strong> We cannot view the content of your files as they are immediately encrypted upon upload. However, you should NOT upload:</p>
+                <ul>
+                    <li>Files containing highly sensitive personal data (health records, financial data, etc.)</li>
+                    <li>Confidential business documents</li>
+                    <li>Illegal content</li>
+                </ul>
+
+                <h4>4.2 Technical Data</h4>
+                <p><strong>What we collect:</strong></p>
+                <ul>
+                    <li>IP address (automatically provided by your browser)</li>
+                    <li>Browser type and version</li>
+                    <li>Operating system</li>
+                    <li>Access date and time</li>
+                    <li>Requested URLs</li>
+                    <li>HTTP status codes</li>
+                </ul>
+                <p><strong>Why:</strong> Server operation, error diagnosis, security monitoring, abuse prevention<br>
+                <strong>How long:</strong> Server logs are retained for maximum 7 days<br>
+                <strong>Legal basis:</strong> Legitimate interest (GDPR Art. 6(1)(f)) - necessary for service operation and security</p>
+
+                <h4>4.3 Cookies and Local Storage</h4>
+                <p><strong>Essential Cookies Only:</strong></p>
+                <ul>
+                    <li><code>tos_accepted</code>: Stores your acceptance of Terms of Service (expires: 1 year)</li>
+                    <li><code>privacy_accepted</code>: Stores your acceptance of this Privacy Policy (expires: 1 year)</li>
+                    <li>Session identifiers (if implemented): For associating your uploads with processing jobs (session-only)</li>
+                </ul>
+                <p><strong>Legal basis:</strong> TDDDG § 25(2) No. 2 - technically necessary cookies</p>
+                
+                <p>We do <strong>NOT</strong> use:</p>
+                <ul>
+                    <li>Analytics cookies (no Google Analytics, Matomo, etc.)</li>
+                    <li>Advertising cookies</li>
+                    <li>Social media cookies</li>
+                    <li>Third-party tracking</li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h3>5. How We Process Your Data</h3>
+                
+                <h4>5.1 File Processing Pipeline</h4>
+                <ol>
+                    <li><strong>Upload &amp; Encryption:</strong> File is encrypted immediately upon arrival using AES-256-GCM. Unique encryption key is derived for each job using HKDF-SHA256. Encrypted file is stored in <code>/storage/inputs</code></li>
+                    <li><strong>Processing:</strong> Job is queued in Redis (stores only Job ID, no file content). Worker creates temporary workspace in RAM-disk (tmpfs). File is decrypted into RAM for processing. Conversion/compression is performed using: libvips, ffmpeg, Ghostscript, QPDF, or Rembg AI service. Output is re-encrypted before storage.</li>
+                    <li><strong>Delivery:</strong> Encrypted output is stored in <code>/storage/outputs</code>. You can download the processed file via unique download link. Job metadata is stored in PostgreSQL (Job ID, timestamps, file sizes, status).</li>
+                    <li><strong>Deletion:</strong> Automated cleanup task runs every 15 minutes. All jobs older than 24 hours are permanently deleted. Includes: encrypted input/output files, database records, Redis queue entries.</li>
+                </ol>
+
+                <h4>5.2 AI Background Removal</h4>
+                <p>When you use the background removal feature:</p>
+                <ul>
+                    <li>Your image is transmitted to our internal Rembg microservice (Python/Silueta model)</li>
+                    <li>This service runs on the same server infrastructure</li>
+                    <li>The image is processed in memory and immediately discarded</li>
+                    <li>No external AI services are used</li>
+                </ul>
+            </section>
+
+            <section class="legal-section">
+                <h3>6. Data Sharing and Third Parties</h3>
+                <p><strong>We do NOT share your data with third parties.</strong></p>
+                <p><strong>No external services:</strong></p>
+                <ul>
+                    <li>No cloud storage providers</li>
+                    <li>No CDN services</li>
+                    <li>No analytics platforms</li>
+                    <li>No advertising networks</li>
+                    <li>No social media integrations</li>
+                </ul>
+
+                <p><strong>Exception - Technical Infrastructure:</strong> Your data passes through the following technical infrastructure components, which are NOT considered third parties as we control them:</p>
+                <ul>
+                    <li>Cloudflare Tunnel (cloudflared): For secure connection routing to our server</li>
+                    <li>Our homelab server running Linux Mint</li>
+                    <li>Docker containers (API, Worker, Rembg, Redis, PostgreSQL, Nginx)</li>
+                </ul>
+
+                <p><strong>Cloudflare Tunnel Specifics:</strong> Acts only as an encrypted tunnel (end-to-end encrypted). Does not inspect or store file contents. May temporarily process connection metadata (IP addresses) per their privacy policy. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's privacy policy</a>.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>7. Data Security Measures</h3>
+                <p>We implement industry-standard security measures:</p>
+                
+                <p><strong>Encryption:</strong></p>
+                <ul>
+                    <li>AES-256-GCM for all stored files</li>
+                    <li>Unique keys per job (HKDF-SHA256 key derivation)</li>
+                    <li>TLS/SSL for all connections</li>
+                </ul>
+
+                <p><strong>Infrastructure:</strong></p>
+                <ul>
+                    <li>RAM-disk processing (no unencrypted data on physical disks)</li>
+                    <li>Docker container isolation</li>
+                    <li>Regular security updates</li>
+                    <li>Automated file deletion</li>
+                </ul>
+
+                <p><strong>Limitations:</strong> As a hobby project running on personal infrastructure, we cannot guarantee the same security level as commercial data centers. There is always a residual risk of server compromise, infrastructure failure, or unauthorized access.</p>
+
+                <p><strong>Your Responsibility:</strong> Do not upload highly sensitive data. Use strong, unique download links. Download and delete your files promptly.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>8. International Data Transfers</h3>
+                <p><strong>Server Location:</strong> Germany (homelab)</p>
+                <p><strong>Worldwide Access:</strong> While our server is in Germany, users worldwide can access the service. By using our service from outside the EU/EEA, you acknowledge that your data will be transferred to and processed in Germany. Germany provides adequate data protection under GDPR. No transfers to countries outside the EU/EEA occur.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>9. Your Rights Under GDPR</h3>
+                <p>You have the following rights regarding your personal data:</p>
+                <ul>
+                    <li><strong>Right of Access (Art. 15 GDPR):</strong> You can request information about what personal data we process about you.</li>
+                    <li><strong>Right to Rectification (Art. 16 GDPR):</strong> You can request correction of inaccurate data.</li>
+                    <li><strong>Right to Erasure (Art. 17 GDPR):</strong> You can request deletion of your data. Since files are auto-deleted after 24 hours, this right is largely fulfilled automatically.</li>
+                    <li><strong>Right to Restriction (Art. 18 GDPR):</strong> You can request restriction of processing under certain conditions.</li>
+                    <li><strong>Right to Data Portability (Art. 20 GDPR):</strong> You can request your data in a machine-readable format (you can download your processed files directly).</li>
+                    <li><strong>Right to Object (Art. 21 GDPR):</strong> You can object to processing based on legitimate interest.</li>
+                    <li><strong>Right to Withdraw Consent (Art. 7(3) GDPR):</strong> You can withdraw consent at any time by simply not using the service.</li>
+                    <li><strong>Right to Lodge a Complaint (Art. 77 GDPR):</strong> You can file a complaint with a data protection supervisory authority.</li>
+                </ul>
+
+                <p><strong>For Germany:</strong> Your local state data protection authority (Landesdatenschutzbehörde) or the federal authority: Bundesbeauftragte für den Datenschutz und die Informationsfreiheit (BfDI) - <a href="https://www.bfdi.bund.de" target="_blank" rel="noopener">www.bfdi.bund.de</a></p>
+                
+                <p><strong>To exercise your rights, contact us at:</strong> contact@cns-studios.com</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>10. Data Retention Periods</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data Type</th>
+                            <th>Retention Period</th>
+                            <th>Reason</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Uploaded files (encrypted)</td>
+                            <td>24 hours</td>
+                            <td>Automated deletion</td>
+                        </tr>
+                        <tr>
+                            <td>Processed files (encrypted)</td>
+                            <td>24 hours</td>
+                            <td>Automated deletion</td>
+                        </tr>
+                        <tr>
+                            <td>Job metadata (PostgreSQL)</td>
+                            <td>24 hours</td>
+                            <td>Automated deletion</td>
+                        </tr>
+                        <tr>
+                            <td>Server logs</td>
+                            <td>7 days</td>
+                            <td>Security &amp; debugging</td>
+                        </tr>
+                        <tr>
+                            <td>Consent cookies</td>
+                            <td>1 year</td>
+                            <td>Legal compliance</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="legal-section">
+                <h3>11. Children's Privacy</h3>
+                <p>Our service is not directed at children under 16. We do not knowingly collect data from children. If you believe a child has used our service, please contact us immediately.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>12. Automated Decision-Making</h3>
+                <p>We do not use automated decision-making or profiling as defined in GDPR Art. 22.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>13. Changes to This Privacy Policy</h3>
+                <p>We may update this privacy policy to reflect changes in legal requirements, service features, or data processing practices. Significant changes will be announced on our website with at least 30 days notice. Continued use after changes constitutes acceptance.</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>14. Contact</h3>
+                <p>For privacy-related questions, exercising your rights, or data protection concerns:</p>
+                <p><strong>Email:</strong> contact@cns-studios.com<br>
+                <strong>Response time:</strong> We aim to respond within 30 days as required by GDPR Art. 12(3)</p>
+            </section>
+
+            <section class="legal-section">
+                <h3>15. Specific Information for German Users</h3>
+                <p><strong>Datenschutzrechtliche Informationen gemäß Art. 13, 14 DSGVO:</strong></p>
+                <p>Diese Datenschutzerklärung erfüllt die Informationspflichten nach Art. 13 und 14 DSGVO. Die Verarbeitung Ihrer personenbezogenen Daten erfolgt ausschließlich zu den in dieser Erklärung genannten Zwecken und auf den angegebenen Rechtsgrundlagen.</p>
+                <p><strong>Widerspruchsrecht:</strong> Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung Sie betreffender personenbezogener Daten, die aufgrund von Art. 6 Abs. 1 lit. f DSGVO erfolgt, Widerspruch einzulegen.</p>
             </section>
         </main>
-        <footer class="footer" style="opacity:1;animation:none;">
+        <footer class="footer">
             <a href="/privacy.html">Privacy Policy</a>
             <span class="footer-sep"></span>
             <a href="/terms.html">Terms of Service</a>
-            <span class="footer-sep"></span>
-            <a href="/impressum.html">Impressum</a>
         </footer>
     </div>
 </body>
